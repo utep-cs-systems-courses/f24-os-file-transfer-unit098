@@ -2,6 +2,7 @@
 
 # Echo server program
 
+import ibfram
 import socket, sys, re
 sys.path.append("../lib")       # for params
 import params
@@ -27,18 +28,20 @@ s.bind((listenAddr, listenPort))
 s.listen(1)              # allow only one outstanding request
 # s is a factory for connected sockets
 
+dec=ibfram.ibdeframmer()
 conn, addr = s.accept()  # wait until incoming connection request (and accept it)
+fulldata = bytes()
 print('Connected by', addr)
 while 1:
-    data = conn.recv(1024).decode()
+    data = conn.recv(1024)
     if len(data) == 0:
-        print("Zero length read, nothing to send, terminating")
+        print("Zero length read, nothing to send, writing")
+        print(fulldata.decode())
+        dec.deframefiles(fulldata)
         break
-    sendMsg = ("Echoing %s" % data).encode()
-    print("Received '%s', sending '%s'" % (data, sendMsg.decode()))
-    while len(sendMsg):
-        bytesSent = conn.send(sendMsg)
-        sendMsg = sendMsg[bytesSent:0]
+    fulldata = fulldata+data
+    print("captured", data.decode())
+    
 conn.shutdown(socket.SHUT_WR)
 conn.close()
 
